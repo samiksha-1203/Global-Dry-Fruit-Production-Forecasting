@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A Python-generated interactive dashboard exploring global dry-fruit and nut production and 2025 forecasts from FAOSTAT data.">
+  <title>Dry Fruits Around the World | Python-generated dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-3.3.1.min.js" integrity="sha256-4rD3fugVb/nVJYUv5Ky3v+fYXoouHaBSP20WIJuEiWg=" crossorigin="anonymous"></script>
+  <script src="./outputs/dashboard_data.js"></script>
+  <script defer src="./dashboard.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f1e8;
+      --ink: #2b241e;
+      --muted: #75695e;
+      --brown: #5b351f;
+      --gold: #d99a4b;
+      --line: #e8dccb;
+      --green: #2a7f62;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: Arial, sans-serif; }
+    .wrap { width: min(1280px, 90%); margin: 0 auto; }
+    .hero { position: relative; overflow: hidden; padding: 64px 0 72px; color: white; background: linear-gradient(135deg, #432617, #82502b 50%, #d39a4b); }
+    .hero::after { position: absolute; right: 2%; bottom: 18px; color: white; content: "🌰  🥜  🌰  🫘  🍇  🌴"; font-size: clamp(30px, 4.5vw, 58px); opacity: .35; pointer-events: none; }
+    .hero .wrap { position: relative; z-index: 1; }
+    .tag { display: inline-block; padding: 8px 13px; border: 1px solid #ffffff70; border-radius: 999px; background: #ffffff20; font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+    h1 { max-width: 900px; margin: 20px 0 15px; font-size: clamp(42px, 6vw, 76px); line-height: .94; letter-spacing: -3px; }
+    .hero p { max-width: 850px; margin: 0; font-size: 19px; line-height: 1.5; }
+    .hero .subline { margin-top: 14px; color: #ffedce; font-size: 13px; }
+    nav { position: sticky; top: 0; z-index: 5; background: #2d2119f2; }
+    nav .wrap { display: flex; flex-wrap: wrap; gap: 20px; padding: 13px 0; }
+    nav a { color: white; font-size: 13px; font-weight: 700; text-decoration: none; }
+    main { padding: 28px 0 65px; }
+    section { margin-top: 45px; scroll-margin-top: 62px; }
+    .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 13px; margin-top: -54px; position: relative; z-index: 2; }
+    .kpi, .card, .model-card { border: 1px solid var(--line); border-radius: 18px; background: white; box-shadow: 0 10px 30px #38231314; }
+    .kpi { min-height: 96px; padding: 18px; text-align: center; }
+    .kpi-value { color: var(--brown); font-size: clamp(17px, 2vw, 25px); font-weight: 850; overflow-wrap: anywhere; }
+    .kpi-label { margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .section-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; color: var(--brown); }
+    h2 { margin: 0; font-size: clamp(24px, 3vw, 30px); }
+    h3 { margin: 0 0 12px; color: var(--brown); font-size: 18px; }
+    .sub { margin: 0 0 16px; color: var(--muted); line-height: 1.55; }
+    .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .card { min-width: 0; padding: 15px; border-radius: 22px; box-shadow: 0 7px 25px #3823130b; }
+    .chart { min-height: 390px; }
+    .chart-wide { min-height: 600px; }
+    .data-note { margin-top: 14px; padding: 13px 15px; border-left: 5px solid var(--gold); border-radius: 9px; background: #fff1d9; color: #5a4838; font-size: 13px; line-height: 1.55; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+    .summary-stat { padding: 17px; border-radius: 14px; background: #fff; border: 1px solid var(--line); }
+    .summary-stat strong { display: block; color: var(--brown); font-size: 23px; }
+    .summary-stat span { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 9px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; white-space: normal; }
+    thead th { color: var(--brown); background: #fbf7f0; }
+    .table-wrap { overflow-x: auto; }
+    .selected-model-row { background: #edf7f0; font-weight: 700; }
+    .controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; max-width: 760px; margin: 20px 0; }
+    label { display: grid; gap: 7px; color: var(--brown); font-size: 13px; font-weight: 700; }
+    select { width: 100%; padding: 12px; border: 1px solid #cdbba7; border-radius: 9px; background: white; color: var(--ink); font: inherit; }
+    .prediction-result { min-height: 112px; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 20px; border-radius: 13px; background: #f7f1e8; }
+    .prediction-result.empty { color: var(--muted); }
+    .prediction-value { color: var(--green); font-size: clamp(25px, 4vw, 36px); font-weight: 800; }
+    .prediction-caption { color: var(--muted); font-size: 14px; }
+    .model-highlight { margin-bottom: 16px; border-left: 5px solid var(--green); }
+    .model-highlight p { margin: 8px 0 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .hypothesis-card { margin-top: 16px; }
+    .hypothesis-card p { margin: 8px 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .hypothesis-result { color: var(--brown) !important; font-weight: 700; }
+    .status { margin-top: 10px; color: #ffedce; font-size: 12px; }
+    .map-summary { margin: 4px 2px 0; color: var(--muted); font-size: 13px; }
+    .figure-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .figure-card { overflow: hidden; padding: 0; }
+    .figure-card img { display: block; width: 100%; height: auto; background: #fff; }
+    .figure-card figcaption { padding: 12px 15px 15px; color: var(--brown); font-size: 14px; font-weight: 700; }
+    .figure-card figcaption span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 400; line-height: 1.4; }
+    .workflow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .workflow article { padding: 16px; border-radius: 13px; background: #fff; border: 1px solid var(--line); }
+    .workflow strong { display: block; margin-bottom: 7px; color: var(--brown); }
+    .workflow span { color: var(--muted); font-size: 13px; line-height: 1.45; }
+    footer { padding: 26px 0; background: #2b2019; color: #eee; font-size: 13px; line-height: 1.6; }
+    @media (max-width: 1000px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } .workflow { grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid2 { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { .grid2, .summary-grid, .controls, .figure-gallery { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .workflow { grid-template-columns: 1fr; } h1 { letter-spacing: -2px; } .hero::after { font-size: 30px; } .chart, .chart-wide { min-height: 340px; } }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <span class="tag">PYTHON-GENERATED INTERACTIVE HTML DASHBOARD</span>
+      <h1>Dry Fruits Around the World</h1>
+      <p>Explore FAOSTAT crop-production history and model-based forecasts for selected nuts, dates, and figs.</p>
+      <p class="subline">The Python analysis generates the data and model outputs. This HTML dashboard presents those outputs; it is not a live Python web application.</p>
+      <div class="status" id="dashboard-status" role="status">Loading dashboard data…</div>
+    </div>
+  </header>
+  <nav aria-label="Dashboard sections">
+    <div class="wrap">
+      <a href="#overview">Overview</a>
+      <a href="#map">World map</a>
+      <a href="#visuals">Production charts</a>
+      <a href="#gallery">Analysis gallery</a>
+      <a href="#stats">Data &amp; correlation</a>
+      <a href="#ml">Model results</a>
+      <a href="#forecast">2025 prediction</a>
+    </div>
+  </nav>
+  <main class="wrap">
+    <section id="overview" aria-label="Project overview">
+      <div class="kpis">
+        <article class="kpi"><div class="kpi-value" id="kpi-production">—</div><div class="kpi-label" id="production-period">Cumulative production</div></article>
+        <article class="kpi"><div class="kpi-value" id="kpi-countries">—</div><div class="kpi-label">Countries / areas in history</div></article>
+        <article class="kpi"><div class="kpi-value" id="kpi-items">—</div><div class="kpi-label">Selected crop items</div></article>
+        <article class="kpi"><div class="kpi-value" id="kpi-top-country">—</div><div class="kpi-label">Top cumulative producer</div></article>
+        <article class="kpi"><div class="kpi-value" id="kpi-top-fruit">—</div><div class="kpi-label">Top crop by cumulative production</div></article>
+        <article class="kpi"><div class="kpi-value" id="kpi-growth">—</div><div class="kpi-label">Latest-year production growth</div></article>
+      </div>
+      <p class="data-note">Cumulative production sums country-item-year records across the full displayed period. It is not production for one year. FAOSTAT crop categories are used as a proxy for a dry-fruit/nut topic; they are not a complete processed dried-fruit dataset.</p>
+    </section>
+
+    <section id="map">
+      <div class="section-heading"><span aria-hidden="true">🌍</span><h2>World production map</h2></div>
+      <p class="sub">Each country keeps the same vivid, distinct color as in your previous dashboard. Hover to see its leading crop item and production. Use the filters to view a crop and year or cumulative production.</p>
+      <div class="card">
+        <div class="controls">
+          <label for="map-crop">Crop item
+            <select id="map-crop"></select>
+          </label>
+          <label for="map-year">Year
+            <select id="map-year"></select>
+          </label>
+        </div>
+        <div id="world-map" class="chart chart-wide" role="img" aria-label="Interactive world map with vivid distinct colors per country"></div>
+        <p class="map-summary" id="map-summary" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section id="visuals">
+      <div class="section-heading"><span aria-hidden="true">📈</span><h2>Production charts</h2></div>
+      <p class="sub">Historical totals and trends from the current cleaned data, using the vivid country colors and soft crop palette from the previous dashboard.</p>
+      <div class="grid2">
+        <div class="card"><div id="yearly-chart" class="chart" role="img" aria-label="Annual global production chart"></div></div>
+        <div class="card"><div id="fruit-chart" class="chart" role="img" aria-label="Cumulative production by selected crop chart"></div></div>
+        <div class="card"><div id="country-chart" class="chart" role="img" aria-label="Top country producers chart"></div></div>
+        <div class="card"><div id="growth-chart" class="chart" role="img" aria-label="Year-over-year global production growth chart"></div></div>
+      </div>
+    </section>
+
+    <section id="gallery">
+      <div class="section-heading"><span aria-hidden="true">🖼️</span><h2>Analysis chart gallery</h2></div>
+      <p class="sub">The full set of plots produced by the Python analysis, including fruit trends, top producers, area/yield relationships, model predictions, residual diagnostics, and feature importance.</p>
+      <div id="figure-gallery" class="figure-gallery"></div>
+    </section>
+
+    <section id="stats">
+      <div class="section-heading"><span aria-hidden="true">📐</span><h2>Data &amp; correlation</h2></div>
+      <p class="sub" id="analysis-summary">Statistics will load with the current Python pipeline outputs.</p>
+      <div class="summary-grid">
+        <div class="summary-stat"><strong id="clean-row-count">—</strong><span>Clean country-item-year rows</span></div>
+        <div class="summary-stat"><strong id="year-period">—</strong><span>Historical coverage</span></div>
+        <div class="summary-stat"><strong id="forecast-count">—</strong><span>Forecastable country-item series for 2025</span></div>
+      </div>
+      <div class="card"><div id="correlation-chart" class="chart" role="img" aria-label="Correlation heatmap for transformed production variables"></div></div>
+      <p class="data-note">Pearson correlations are calculated after log(1 + value) transformation on the cleaned data. Correlation describes association, not causation.</p>
+      <div class="card hypothesis-card">
+        <h3>Production trend hypothesis: has global production increased?</h3>
+        <p><strong>H₀:</strong> <span id="trend-null">Loading hypothesis…</span></p>
+        <p><strong>H₁:</strong> <span id="trend-alternative">Loading hypothesis…</span></p>
+        <p id="trend-method"></p>
+        <p id="trend-statistics"></p>
+        <p class="hypothesis-result" id="trend-conclusion" aria-live="polite">Loading trend result…</p>
+        <div id="trend-hypothesis-chart" class="chart" role="img" aria-label="Annual production observations and fitted linear trend for the production trend hypothesis"></div>
+        <p class="data-note">Blue shows observed annual totals; the dashed line shows the fitted linear trend tested by H₀/H₁.</p>
+        <p class="data-note">This is an exploratory linear trend test over annual totals from the selected FAOSTAT crops. Newey–West standard errors account approximately for short-lag serial correlation; the 25-year series is short, so interpret the result as evidence of a trend in this dataset, not proof of a cause or a forecast.</p>
+      </div>
+    </section>
+
+    <section id="ml">
+      <div class="section-heading"><span aria-hidden="true">🤖</span><h2>Model evaluation</h2></div>
+      <p class="sub" id="model-summary">Model results will load from the latest generated output.</p>
+      <div class="card model-highlight">
+        <h3>Selected model: <span id="selected-model">—</span></h3>
+        <p id="selection-reason">The selected model and selection rule will load from the current Python run.</p>
+        <p id="validation-summary">Validation details will load from the current Python run.</p>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>Final holdout comparison (2022–2024)</h3><div id="metrics-table" class="table-wrap"></div></div>
+        <div class="card"><div id="model-chart" class="chart" role="img" aria-label="Final holdout model RMSE comparison chart"></div></div>
+        <div class="card"><h3>Selected model: tuning comparison</h3><div id="tuning-table" class="table-wrap"></div></div>
+      </div>
+      <div class="card"><h3>Model-family selection (training-only validation)</h3><p class="sub">The model family is selected by pooled MAE on expanding-window training folds; the later holdout is reserved for final evaluation.</p><div id="model-selection-table" class="table-wrap"></div></div>
+      <div class="grid2">
+        <div class="card"><h3>Chronological tuning validation folds</h3><p class="sub">Mean absolute error for the selected hyperparameters in each training-only validation window.</p><div id="cv-fold-table" class="table-wrap"></div></div>
+        <div class="card"><h3>Held-out performance by year</h3><p class="sub">Tuned model and previous-year baseline scored on the same rows for each test year.</p><div id="yearly-validation-table" class="table-wrap"></div></div>
+      </div>
+      <div class="card hypothesis-card">
+        <h3>Paired t-test: selected tuned model vs previous-year baseline</h3>
+        <p><strong>H₀:</strong> <span id="hypothesis-null">Loading hypothesis…</span></p>
+        <p><strong>H₁:</strong> <span id="hypothesis-alternative">Loading hypothesis…</span></p>
+        <p id="hypothesis-method"></p>
+        <p id="hypothesis-statistics"></p>
+        <p class="hypothesis-result" id="hypothesis-conclusion" aria-live="polite">Loading validation result…</p>
+        <div id="model-hypothesis-chart" class="chart" role="img" aria-label="Mean paired absolute-error difference and 95 percent confidence interval compared with zero"></div>
+        <p class="data-note">Negative differences favor the tuned model. If the confidence interval crosses the zero line, it includes no difference; here, it crosses zero, consistent with the test not establishing superiority.</p>
+        <p class="data-note">The paired comparison uses country-item series-clustered standard errors to account for repeated yearly observations within a series. It assumes different country-item series are independent, which may not fully hold because global shocks can affect multiple series. Interpret this as evidence from one temporal holdout, not proof of universal model superiority.</p>
+      </div>
+      <p class="data-note">Model-family selection and hyperparameter tuning use chronological folds drawn only from training targets through 2021. The 2022–2024 holdout is reserved for final evaluation. Test predictions use observed lag inputs for each test year (rolling one-year-ahead evaluation), not recursive multi-year forecasts. MAPE is sensitive to small actual values; compare it with MAE, RMSE, and WAPE. These results are retrospective on this dataset, not external validation on new countries, crops, or future years.</p>
+    </section>
+
+    <section id="forecast">
+      <div class="section-heading"><span aria-hidden="true">🔮</span><h2>Choose a 2025 production prediction</h2></div>
+      <p class="sub" id="forecast-summary">Forecasts will load from the latest generated output.</p>
+      <div class="grid2">
+        <div class="card"><div id="global-forecast-chart" class="chart" role="img" aria-label="Top ten colorful 2025 production forecasts by country and crop"></div></div>
+        <div class="card">
+          <div class="controls">
+            <label for="prediction-country">Country / area
+              <select id="prediction-country"></select>
+            </label>
+            <label for="prediction-crop">Crop item
+              <select id="prediction-crop"></select>
+            </label>
+          </div>
+          <output id="prediction-result" class="prediction-result" aria-live="polite">Choose a country and crop to see the estimate.</output>
+          <div id="forecast-country-chart" class="chart" role="img" aria-label="Colorful 2025 crop production forecasts for the selected country"></div>
+          <p class="data-note">This selector looks up a 2025 prediction produced by the trained Python model. It does not run a new prediction in the browser. Only country-item combinations with sufficient historical lag data are available; predictions are estimates, not observed 2025 values.</p>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Project workflow">
+      <div class="section-heading"><span aria-hidden="true">🧾</span><h2>How this dashboard is built</h2></div>
+      <div class="workflow">
+        <article><strong>01 · FAOSTAT data</strong><span>Raw country, crop, year, area, yield, and production records.</span></article>
+        <article><strong>02 · Python analysis</strong><span>Cleaning, exploratory plots, lag feature creation, and chronological train/test split.</span></article>
+        <article><strong>03 · Model training</strong><span>Random Forest and XGBoost are compared with a previous-year baseline; the selected model is tuned and refit.</span></article>
+        <article><strong>04 · HTML dashboard</strong><span>The pipeline exports dashboard data; this page renders charts, metrics, and the forecast selector.</span></article>
+      </div>
+    </section>
+  </main>
+  <footer><div class="wrap">Source: FAOSTAT Crops and livestock products (QCL). Historical data and model forecasts are distinct; forecast values are not official observed production.</div></footer>
+</body>
+</html>

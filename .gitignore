@@ -1,0 +1,20 @@
+# Python cache and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local-only files
+.env
+.env.*
+!.env.example
+.vscode/
+
+# Generated model binary is not required by the static dashboard
+outputs/final_model.joblib
+
+# Retained locally as a visual reference; not part of the final site
+previous dashboard.html
+
+# Downloadable runtime archives
+*.zip
